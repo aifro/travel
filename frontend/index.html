@@ -17,6 +17,8 @@
   <link href="images/favicon.png" rel="shortcut icon" type="image/x-icon">
   <link href="images/webclip.png" rel="apple-touch-icon"><!--  Memberstack webflow package  -->
   <link rel="stylesheet" href="https://fengyuanchen.github.io/datepicker/css/datepicker.css">
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 </head>
 <body>
   <header>
@@ -82,6 +84,9 @@
         <h2>Return Flights</h2>
         <div id="return-flights"></div>
       </div>
+      <div id="loading-screen" style="display: none;">
+        <h2>Loading...</h2>
+      </div>
     </div>
   </div>
   <!-- Firebase SDK -->
@@ -91,6 +96,7 @@
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-analytics.js";
     import { getDatabase, ref, onValue, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
     // Your web app's Firebase configuration
     const firebaseConfig = {
@@ -108,6 +114,7 @@
     const analytics = getAnalytics(app);
     const database = getDatabase(app);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
     // Make Firebase services available globally
     window.firebaseDatabase = database;
@@ -144,12 +151,33 @@
     onAuthStateChanged(auth, (user) => {
       if (user) {
         // User is signed in
+        localStorage.setItem('userUID', user.uid);
         document.getElementById('login-button').style.display = 'none';
         document.getElementById('user-info').style.display = 'block';
         document.getElementById('user-name').textContent = user.displayName;
         document.getElementById('user-photo').src = user.photoURL;
+
+        // Check and create user document in Firestore
+        const userRef = doc(db, 'users', user.uid);
+        getDoc(userRef).then((docSnapshot) => {
+          if (!docSnapshot.exists()) {
+            // Document doesn't exist, so create it
+            setDoc(userRef, {
+              email: user.email,
+              createdAt: new Date(),
+              // Add any other initial user data you want to store
+            }).then(() => {
+              console.log("User document created for:", user.uid);
+            }).catch((error) => {
+              console.error("Error creating user document:", error);
+            });
+          } else {
+            console.log("User document already exists for:", user.uid);
+          }
+        });
       } else {
         // User is signed out
+        localStorage.removeItem('userUID');
         document.getElementById('login-button').style.display = 'block';
         document.getElementById('user-info').style.display = 'none';
       }
@@ -162,23 +190,61 @@
       $('#flight-form').on('submit', function(e) {
         e.preventDefault();
         
-        // ... existing form data collection ...
+        const userUID = localStorage.getItem('userUID');
+        if (userUID) {
+          var formData = {
+            uid: userUID,
+            departDate: $('#DepartDate').val(),
+            returnDate: $('#ReturnDate').val(),
+            departureCode: $('#AirportCode').val(),
+            destinationCode: $('#DestinationCode').val(),
+            email: $('#email').val()
+          };
 
-        // Listen for flights
-        listenForFlights();
+          // Show loading screen
+          $('#loading-screen').show();
+          $('.card-3').hide();
+
+          // Send data to Make.com
+          $.ajax({
+            url: 'https://hook.us1.make.com/cd46u4ziqwafgrhfxkv8jwvtjrjydfhm',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function(response) {
+              console.log('Data sent to Make.com');
+              // Start listening for flights in Firebase
+              listenForFlights();
+            },
+            error: function(xhr, status, error) {
+              console.error('Error sending data to Make.com:', error);
+              $('#loading-screen').hide();
+              $('.card-3').show();
+              $('.w-form-fail').show();
+            }
+          });
+        } else {
+          console.error('User not logged in');
+          $('.w-form-fail').show().text('Please log in to submit the form.');
+        }
       });
 
       function listenForFlights() {
-        const flightsRef = window.firebaseRef(window.firebaseDatabase, 'flights');
-        window.firebaseOnValue(flightsRef, (snapshot) => {
-          const flights = snapshot.val();
-          if (flights) {
-            displayDepartureFlights(Object.values(flights));
-            
-            $('.card-3').hide();
-            $('#flight-results').show();
-          }
-        });
+        const userUID = localStorage.getItem('userUID');
+        if (userUID) {
+          const flightsRef = db.collection('users').doc(userUID).collection('flights');
+          flightsRef.onSnapshot((snapshot) => {
+            const flights = [];
+            snapshot.forEach((doc) => {
+              flights.push(doc.data());
+            });
+            if (flights.length > 0) {
+              displayDepartureFlights(flights);
+              $('#loading-screen').hide();
+              $('#flight-results').show();
+            }
+          });
+        }
       }
 
       function displayDepartureFlights(flights) {
