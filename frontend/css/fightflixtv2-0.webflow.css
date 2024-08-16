@@ -1,0 +1,238 @@
+:root {
+  --black: black;
+  --dark-slate-blue: #005774;
+  --dark-slate-green: #005e5c;
+  --white: white;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  color: #333;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.w-form {
+  margin: 0 0 15px;
+}
+
+.w-form-done {
+  display: none;
+  padding: 20px;
+  text-align: center;
+  background-color: #dddddd;
+}
+
+.w-form-fail {
+  display: none;
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #ffdede;
+}
+
+.w-input {
+  display: block;
+  width: 100%;
+  height: 38px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  line-height: 1.42857143;
+  color: #333333;
+  background-color: #ffffff;
+  border: 1px solid #cccccc;
+}
+
+.w-button {
+  display: inline-block;
+  padding: 9px 15px;
+  background-color: #3898EC;
+  color: white;
+  border: 0;
+  line-height: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.section---date {
+  background-color: #fbfcfe;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 5%;
+  display: flex;
+  position: relative;
+}
+
+.content-wrap {
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+}
+
+.heading-wrap {
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 44px;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+}
+
+.icon-l {
+  width: 72px;
+  margin-bottom: 24px;
+}
+
+.h1-heading {
+  color: #160042;
+  text-align: center;
+  letter-spacing: -.02em;
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 44px;
+  font-weight: 600;
+}
+
+.paragraph-3 {
+  color: #6b7194;
+  text-align: center;
+  letter-spacing: -.02em;
+  margin-bottom: 0;
+  margin-left: auto;
+  margin-right: auto;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 32px;
+}
+
+.card-3 {
+  background-color: #fff;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 1140px;
+  padding: 32px;
+  position: relative;
+  box-shadow: 34px 34px 88px #17093614;
+}
+
+.form-block-3 {
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.div-block-90 {
+  grid-column-gap: 16px;
+  grid-row-gap: 16px;
+  grid-template-rows: auto;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-columns: 1fr;
+  display: grid;
+}
+
+.input-field-wrap {
+  margin-bottom: 24px;
+}
+
+.field-label-3 {
+  color: #160042;
+  letter-spacing: -.02em;
+  margin-bottom: 8px;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.field-wrap {
+  align-items: center;
+  display: flex;
+  position: relative;
+}
+
+.date-field {
+  color: #151e24;
+  border: 1px solid #e9ecf0;
+  border-radius: 12px;
+  width: 100%;
+  min-height: 48px;
+  margin-bottom: 0;
+  padding: 12px 16px 12px 52px;
+  font-size: 14px;
+  transition: all .25s;
+  box-shadow: 1px 1px 2px #7281a70a;
+}
+
+.date-field:hover {
+  border-color: #ccd5e0;
+}
+
+.date-field:focus {
+  border-color: #642eff;
+}
+
+.date-field::placeholder {
+  color: #a0a6b0;
+}
+
+.field-icon {
+  position: absolute;
+  inset: auto auto auto 16px;
+}
+
+.submit-button-2 {
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  background-color: #642eff;
+  border: 2px solid #642eff;
+  border-radius: 400px;
+  justify-content: center;
+  align-items: center;
+  width: 50%;
+  min-height: 48px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 12px 32px;
+  font-size: 16px;
+  transition: all .3s;
+  display: flex;
+  position: relative;
+  box-shadow: 2px 2px 2px #7281a70a;
+}
+
+.submit-button-2:hover, .submit-button-2:focus {
+  border-color: #b197ff;
+}
+
+.success-message {
+  background-color: #f3f5fb;
+  border-radius: 12px;
+}
+
+@media screen and (max-width: 767px) {
+  .div-block-90 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('../fonts/Nunito-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('../fonts/Nunito-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
