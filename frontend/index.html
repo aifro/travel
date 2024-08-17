@@ -19,6 +19,8 @@
   <link rel="stylesheet" href="https://fengyuanchen.github.io/datepicker/css/datepicker.css">
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </head>
 <body>
   <header>
@@ -53,10 +55,10 @@
           </div>
           <div class="flight-search-middle">
             <div class="flight-search-input date">
-              <input type="date" id="DepartDate" name="DepartDate" required>
+              <input type="text" id="DepartDate" name="DepartDate" placeholder="Depart Date" required readonly>
             </div>
             <div class="flight-search-input date">
-              <input type="date" id="ReturnDate" name="ReturnDate" required>
+              <input type="text" id="ReturnDate" name="ReturnDate" placeholder="Return Date" required readonly>
             </div>
           </div>
           <div class="flight-search-bottom">
@@ -360,15 +362,19 @@
     });
   </script>
   
-  <script src="https://fengyuanchen.github.io/datepicker/js/datepicker.js"></script>
   <script>
-    $(document).ready(function () {
-        $('[data-toggle="datepicker"]').datepicker({
-            format: 'yyyy-mm-dd',
-            autoHide: true
-        });
+    document.addEventListener('DOMContentLoaded', function() {
+      flatpickr("#DepartDate", {
+        dateFormat: "m/d/Y",
+        minDate: "today",
+      });
+
+      flatpickr("#ReturnDate", {
+        dateFormat: "m/d/Y",
+        minDate: "today",
+      });
     });
-</script>
+  </script>
 <style>
   .flight-search-container {
     width: 100%;
@@ -405,6 +411,28 @@
     border: 1px solid #dadce0;
     border-radius: 4px;
     font-size: 14px;
+  }
+
+  .flight-search-input.date {
+    position: relative;
+  }
+
+  .flight-search-input.date input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .flight-search-input.date::after {
+    content: '\1F4C5'; /* Calendar emoji */
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    pointer-events: none;
   }
 
   .flight-search-submit {
