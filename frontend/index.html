@@ -38,51 +38,34 @@
   <div class="section---date">
     <div class="content-wrap">
       <div class="heading-wrap"><img loading="lazy" src="images/Logo-White.svg" alt="" class="icon-l">
-        <h1 class="h1-heading">10 Cheapest Flights</h1>
-        <p class="paragraph-3">Find the 10 cheapest flights leaving your airport, compare and select to plan your spontaneous vacation!</p>
+        <h1 class="h1-heading">Budget Flights</h1>
+        <p class="paragraph-3">Step 1: Find the best flights for your next vacation!</p>
       </div>
-      <div class="card-3">
-        <div class="form-block-3 w-form">
-          <form id="flight-form" name="flight-form" data-name="10 cheapest flights">
-            <div class="div-block-90">
-              <div class="input-field-wrap">
-                <div class="field-label-3">Depart Date</div>
-                <div class="field-wrap"><input class="date-field w-input" autocomplete="off" maxlength="256" name="DepartDate" data-name="DepartDate" placeholder="Select Depart Date" data-toggle="datepicker" type="date" id="DepartDate" required=""><img loading="lazy" src="images/Date.svg" alt="" class="field-icon"></div>
-              </div>
-              <div id="w-node-dcec0ac2-1f27-3b51-9d15-63cb13d1dbdb-45975033" class="input-field-wrap">
-                <div class="field-label-3">Return Date</div>
-                <div class="field-wrap"><input class="date-field w-input" autocomplete="off" maxlength="256" name="ReturnDate" data-name="ReturnDate" placeholder="Select Return Date" data-toggle="datepicker" type="date" id="ReturnDate" required=""><img loading="lazy" src="images/Date.svg" alt="" class="field-icon"></div>
-              </div>
-              <div class="input-field-wrap">
-                <div class="field-label-3">Departure City Airport Code</div>
-                <div class="field-wrap"><input class="date-field city w-input" maxlength="256" name="AirportCode" data-name="Airport Code" pattern="^[a-zA-Z]{3}$" placeholder="3 Letter Airport Code" type="text" id="AirportCode" required=""><img loading="lazy" src="images/User-Icon-Grey.svg" alt="" class="field-icon departurecity"></div>
-              </div>
-              <div id="w-node-dcec0ac2-1f27-3b51-9d15-63cb13d1dbe7-45975033" class="input-field-wrap">
-                <div class="field-label-3">Email Address</div>
-                <div class="field-wrap"><input class="date-field city w-input" maxlength="256" name="email" data-name="email" placeholder="Your Email" type="email" id="email" required=""><img loading="lazy" src="images/User-Icon-Grey.svg" alt="" class="field-icon"></div>
-              </div>
-              <div class="input-field-wrap">
-                <div class="field-label-3">Destination Airport Code</div>
-                <div class="field-wrap">
-                  <input class="date-field city w-input" maxlength="256" name="DestinationCode" data-name="Destination Code" pattern="^[a-zA-Z]{3}$" placeholder="3 Letter Airport Code" type="text" id="DestinationCode" required="">
-                </div>
-              </div>
-            </div><input type="submit" data-wait="Please wait..." class="submit-button-2 w-button" value="Submit">
-          </form>
-          <div class="success-message w-form-done">
-            <div>We will email you in a minute with a summary for the top 10 cheapest flights!</div>
+      <div class="flight-search-container">
+        <form id="flight-form" class="flight-search-form">
+          <div class="flight-search-input">
+            <input type="text" id="AirportCode" name="AirportCode" placeholder="From" required>
           </div>
-          <div class="w-form-fail">
-            <div>Oops! Something went wrong while submitting the form.</div>
+          <div class="flight-search-input">
+            <input type="text" id="DestinationCode" name="DestinationCode" placeholder="To" required>
           </div>
+          <div class="flight-search-input">
+            <input type="date" id="DepartDate" name="DepartDate" required>
+          </div>
+          <div class="flight-search-input">
+            <input type="date" id="ReturnDate" name="ReturnDate" required>
+          </div>
+          <button type="submit" class="flight-search-submit">Search</button>
+        </form>
+
+        <div id="loading-screen" style="display: none;">
+          <h2>Loading...</h2>
         </div>
-      </div>
-      <div id="flight-results" class="flight-results" style="display: none;">
-        <h2>Available Flights</h2>
-        <div id="departure-flights"></div>
-      </div>
-      <div id="loading-screen" style="display: none;">
-        <h2>Loading...</h2>
+
+        <div id="flight-results" class="flight-results" style="display: none;">
+          <h2>Best departing flights</h2>
+          <div id="departure-flights"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -195,21 +178,24 @@
         console.log('Form submitted');
         
         const userUID = localStorage.getItem('userUID');
+        const searchID = Date.now().toString(); // Generate a unique search ID
+        localStorage.setItem('lastSearchID', searchID); // Store the search ID
+        
         console.log('User UID:', userUID);
         if (userUID) {
           var formData = {
             uid: userUID,
+            Tracking_Key: searchID,
             departDate: formatDate($('#DepartDate').val()),
             returnDate: formatDate($('#ReturnDate').val()),
             departureCode: $('#AirportCode').val(),
-            destinationCode: $('#DestinationCode').val(),
-            email: $('#email').val()
+            destinationCode: $('#DestinationCode').val()
           };
           console.log('Form data:', formData);
 
           // Show loading screen
           $('#loading-screen').show();
-          $('.card-3').hide();
+          $('#flight-results').hide();
 
           // Send data to Make.com
           $.ajax({
@@ -220,13 +206,12 @@
             success: function(response) {
               console.log('Data sent to Make.com successfully');
               // Start listening for flights in Firebase
-              listenForFlights();
+              listenForFlights(searchID);
             },
             error: function(xhr, status, error) {
               console.error('Error sending data to Make.com:', error);
               $('#loading-screen').hide();
-              $('.card-3').show();
-              $('.w-form-fail').show();
+              $('.w-form-fail').show().text('Error occurred while searching for flights. Please try again.');
             }
           });
         } else {
@@ -248,13 +233,25 @@
                String(date.getDate()).padStart(2, '0');
       }
 
-      function listenForFlights() {
-        console.log('Starting to listen for flights');
+      function listenForFlights(searchID) {
+        console.log('Starting to listen for flights, searchID:', searchID);
         const userUID = localStorage.getItem('userUID');
         console.log('User UID in listenForFlights:', userUID);
         if (userUID) {
           const flightsRef = firebaseCollection(firebaseFirestore, 'users', userUID, 'flights');
           console.log('Listening to:', flightsRef.path);
+          
+          let foundCorrectSearch = false;
+          
+          // Set up a timeout to stop listening after 30 seconds
+          const timeoutId = setTimeout(() => {
+            if (!foundCorrectSearch) {
+              console.log('Search timeout reached');
+              $('#loading-screen').hide();
+              $('.w-form-fail').show().text('Search timed out. Please try again.');
+            }
+          }, 30000); // 30 seconds timeout
+
           firebaseOnSnapshot(flightsRef, (snapshot) => {
             console.log('Snapshot received:', snapshot.size, 'documents');
             snapshot.docChanges().forEach((change) => {
@@ -265,21 +262,31 @@
                   try {
                     const parsedFlights = JSON.parse(flightData.flights);
                     console.log('Parsed flights:', parsedFlights);
-                    if (Array.isArray(parsedFlights)) {
+                    console.log('Comparing Tracking_Key:', parsedFlights[0].Tracking_Key, 'with searchID:', searchID);
+                    if (Array.isArray(parsedFlights) && parsedFlights.length > 0 && parsedFlights[0].Tracking_Key === searchID) {
+                      foundCorrectSearch = true;
+                      clearTimeout(timeoutId); // Clear the timeout as we've received data
                       displayDepartureFlights(parsedFlights);
                       $('#loading-screen').hide();
                       $('#flight-results').show();
                     } else {
-                      console.error('Parsed flights is not an array:', parsedFlights);
+                      console.log('Ignoring outdated search result. Tracking_Key:', parsedFlights[0].Tracking_Key);
                     }
                   } catch (error) {
                     console.error('Error parsing flights data:', error);
+                    console.log('Raw flight data:', flightData.flights);
+                    $('#loading-screen').hide();
+                    $('.w-form-fail').show().text('Error processing flight data. Please try again.');
                   }
                 } else {
-                  console.error('No flights data found in the document');
+                  console.log('No flights data in document:', change.doc.id);
                 }
               }
             });
+            
+            if (!foundCorrectSearch) {
+              console.log('Correct search result not found in this snapshot');
+            }
           }, (error) => {
             console.error("Error listening for flights:", error);
             $('#loading-screen').hide();
@@ -300,17 +307,21 @@
         flights.forEach(function(flight, index) {
           console.log('Processing flight:', flight);
           var flightItem = $('<div class="flight-item">')
-            .append($('<h3>').text(`Flight Option ${index + 1}`))
-            .append($('<p>').text(`Airline: ${flight['1_airline']}`))
-            .append($('<p>').text(`From: ${flight['1_departure_airport_name']} To: ${flight['1_arrival_airport_name']}`))
-            .append($('<p>').text(`Departure: ${flight['1_departure_time']}`))
-            .append($('<p>').text(`Arrival: ${flight['1_arrival_time']}`))
-            .append($('<p>').text(`Duration: ${flight['1_duration']} minutes`))
-            .append($('<p>').text(`Price: $${flight['lowest_price']}`))
-            .append($('<p>').text(`Legroom: ${flight['1_legroom']}`))
-            .append($('<p>').text(`Aircraft: ${flight['1_airplane']}`))
-            .append($('<img>').attr('src', flight['1_logo']).attr('alt', `${flight['1_airline']} logo`))
-            .append($('<button class="select-flight">').text('Select').data('flightIndex', index));
+            .append($('<div class="flight-info">')
+              .append($('<div class="flight-details">')
+                .append($('<img>').attr('src', flight['1_logo']).attr('alt', `${flight['1_airline']} logo`).addClass('airline-logo'))
+                .append($('<div>')
+                  .append($('<div class="flight-times">').text(`${flight['1_departure_time']} - ${flight['1_arrival_time']}`))
+                  .append($('<div class="flight-airports">').text(`${flight['1_departure_airport_name']} - ${flight['1_arrival_airport_name']}`))
+                  .append($('<div class="flight-duration">').text(`${flight['1_duration']} min`))
+                )
+              )
+              .append($('<div class="emissions-info">').text(`${flight['1_extensions'].split(', ').pop()}`))
+            )
+            .append($('<div class="flight-price">')
+              .append($('<div>').text(`$${flight['Price']}`))
+              .append($('<button class="select-flight">').text('Select').data('flightIndex', index))
+            );
 
           flightsList.append(flightItem);
         });
@@ -335,28 +346,118 @@
     });
 </script>
 <style>
-  .flight-item {
-    border: 1px solid #ddd;
-    padding: 15px;
-    margin-bottom: 15px;
-    border-radius: 5px;
+  .flight-search-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
   }
-  .flight-item img {
-    max-width: 100px;
-    margin-bottom: 10px;
+
+  .flight-search-form {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    padding: 16px;
+    margin-bottom: 20px;
   }
-  .select-flight {
-    background-color: #4CAF50;
-    border: none;
+
+  .flight-search-input {
+    flex: 1;
+    margin-right: 10px;
+  }
+
+  .flight-search-input input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
+  .flight-search-submit {
+    background-color: #642eff;
     color: white;
+    border: none;
     padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
+    border-radius: 4px;
     cursor: pointer;
-    border-radius: 5px;
+    font-size: 14px;
+  }
+
+  .flight-results {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+  }
+
+  .flight-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #dadce0;
+    padding: 20px 0;
+  }
+
+  .flight-item:last-child {
+    border-bottom: none;
+  }
+
+  .flight-info {
+    flex: 1;
+  }
+
+  .airline-logo {
+    width: 32px;
+    height: 32px;
+    margin-right: 16px;
+  }
+
+  .flight-details {
+    display: flex;
+    align-items: center;
+  }
+
+  .flight-times {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+
+  .flight-airports {
+    color: #5f6368;
+    font-size: 14px;
+  }
+
+  .flight-duration {
+    color: #5f6368;
+    font-size: 14px;
+    margin-top: 4px;
+  }
+
+  .flight-price {
+    font-size: 20px;
+    font-weight: bold;
+    text-align: right;
+  }
+
+  .select-flight {
+    background-color: #642eff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 8px;
+  }
+
+  .emissions-info {
+    color: #188038;
+    font-size: 12px;
+    margin-top: 4px;
   }
 </style>
 </body>
