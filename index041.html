@@ -43,41 +43,19 @@
       </div>
       <div class="flight-search-container">
         <form id="flight-form" class="flight-search-form">
-          <div class="flight-search-top">
-            <div class="flight-search-input departure">
-              <input type="text" id="AirportCode" name="AirportCode" placeholder="From" required autocomplete="off">
-            </div>
-            <div class="flight-search-input destination">
-              <input type="text" id="DestinationCode" name="DestinationCode" placeholder="To" required autocomplete="off">
-            </div>
+          <div class="flight-search-input">
+            <input type="text" id="AirportCode" name="AirportCode" placeholder="From" required>
           </div>
-          <div class="flight-search-middle">
-            <div class="flight-search-input date">
-              <input type="date" id="DepartDate" name="DepartDate" required>
-            </div>
-            <div class="flight-search-input date">
-              <input type="date" id="ReturnDate" name="ReturnDate" required>
-            </div>
+          <div class="flight-search-input">
+            <input type="text" id="DestinationCode" name="DestinationCode" placeholder="To" required>
           </div>
-          <div class="flight-search-bottom">
-            <div class="flight-search-dropdown">
-              <select id="adults" name="adults" required>
-                <option value="1">1 Adult</option>
-                <option value="2">2 Adults</option>
-                <option value="3">3 Adults</option>
-                <option value="4">4 Adults</option>
-              </select>
-            </div>
-            <div class="flight-search-dropdown">
-              <select id="travel_class" name="travel_class" required>
-                <option value="ECONOMY">Economy</option>
-                <option value="PREMIUM_ECONOMY">Premium Economy</option>
-                <option value="BUSINESS">Business</option>
-                <option value="FIRST">First Class</option>
-              </select>
-            </div>
-            <button type="submit" class="flight-search-submit">Search Flights</button>
+          <div class="flight-search-input">
+            <input type="date" id="DepartDate" name="DepartDate" required>
           </div>
+          <div class="flight-search-input">
+            <input type="date" id="ReturnDate" name="ReturnDate" required>
+          </div>
+          <button type="submit" class="flight-search-submit">Search</button>
         </form>
 
         <div id="loading-screen" style="display: none;">
@@ -211,9 +189,7 @@
             departDate: formatDate($('#DepartDate').val()),
             returnDate: formatDate($('#ReturnDate').val()),
             departureCode: $('#AirportCode').val(),
-            destinationCode: $('#DestinationCode').val(),
-            adults: $('#adults').val(),
-            travelClass: $('#travel_class').val()
+            destinationCode: $('#DestinationCode').val()
           };
           console.log('Form data:', formData);
 
@@ -371,35 +347,28 @@
 </script>
 <style>
   .flight-search-container {
-    width: 100%;
-    max-width: none;
-    padding: 20px 0;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
   }
 
   .flight-search-form {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    padding: 16px;
+    margin-bottom: 20px;
   }
 
-  .flight-search-top,
-  .flight-search-middle,
-  .flight-search-bottom {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    width: 100%;
-  }
-
-  .flight-search-input,
-  .flight-search-dropdown {
+  .flight-search-input {
     flex: 1;
-    min-width: 150px;
+    margin-right: 10px;
   }
 
-  .flight-search-input input,
-  .flight-search-dropdown select {
+  .flight-search-input input {
     width: 100%;
     padding: 10px;
     border: 1px solid #dadce0;
@@ -408,10 +377,10 @@
   }
 
   .flight-search-submit {
-    padding: 10px 20px;
     background-color: #642eff;
     color: white;
     border: none;
+    padding: 10px 20px;
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
@@ -489,21 +458,6 @@
     color: #188038;
     font-size: 12px;
     margin-top: 4px;
-  }
-
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .flight-search-top,
-    .flight-search-middle,
-    .flight-search-bottom {
-      flex-direction: column;
-    }
-
-    .flight-search-input,
-    .flight-search-dropdown,
-    .flight-search-submit {
-      width: 100%;
-    }
   }
 </style>
 </body>

@@ -296,28 +296,34 @@ header {
 /* Add these new styles at the end of the file */
 
 .flight-search-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+  width: 100%;
+  max-width: none;
+  padding: 20px 0;
 }
 
 .flight-search-form {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-  padding: 16px;
-  margin-bottom: 20px;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
 }
 
-.flight-search-input {
+.flight-search-main,
+.flight-search-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+}
+
+.flight-search-input,
+.flight-search-dropdown {
   flex: 1;
-  margin-right: 10px;
+  min-width: 150px;
 }
 
-.flight-search-input input {
+.flight-search-input input,
+.flight-search-dropdown select {
   width: 100%;
   padding: 10px;
   border: 1px solid #dadce0;
@@ -326,13 +332,44 @@ header {
 }
 
 .flight-search-submit {
+  padding: 10px 20px;
   background-color: #642eff;
   color: white;
   border: none;
-  padding: 10px 20px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
+}
+
+.flight-search-dropdown::after {
+  content: '\25BC';
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.flight-search-input input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 1;
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-width: thin;
+}
+
+.flight-search-input input:focus {
+  outline: none;
+  border-color: #642eff;
+  box-shadow: 0 0 0 2px rgba(100, 46, 255, 0.2);
+}
+
+.flight-search-input input::placeholder {
+  color: #999999;
+}
+
+.flight-search-input input:focus::placeholder {
+  color: #cccccc;
 }
 
 .flight-results {
@@ -407,4 +444,17 @@ header {
   color: #188038;
   font-size: 12px;
   margin-top: 4px;
+}
+
+@media (max-width: 768px) {
+  .flight-search-main,
+  .flight-search-bottom {
+    flex-direction: column;
+  }
+
+  .flight-search-input,
+  .flight-search-dropdown,
+  .flight-search-submit {
+    width: 100%;
+  }
 }
