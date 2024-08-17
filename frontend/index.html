@@ -47,11 +47,11 @@
             <div class="div-block-90">
               <div class="input-field-wrap">
                 <div class="field-label-3">Depart Date</div>
-                <div class="field-wrap"><input class="date-field w-input" autocomplete="off" maxlength="256" name="DepartDate" data-name="DepartDate" placeholder="Select Depart Date" data-toggle="datepicker" type="text" id="DepartDate" required=""><img loading="lazy" src="images/Date.svg" alt="" class="field-icon"></div>
+                <div class="field-wrap"><input class="date-field w-input" autocomplete="off" maxlength="256" name="DepartDate" data-name="DepartDate" placeholder="Select Depart Date" data-toggle="datepicker" type="date" id="DepartDate" required=""><img loading="lazy" src="images/Date.svg" alt="" class="field-icon"></div>
               </div>
               <div id="w-node-dcec0ac2-1f27-3b51-9d15-63cb13d1dbdb-45975033" class="input-field-wrap">
                 <div class="field-label-3">Return Date</div>
-                <div class="field-wrap"><input class="date-field w-input" autocomplete="off" maxlength="256" name="ReturnDate" data-name="ReturnDate" placeholder="Select Return Date" data-toggle="datepicker" type="text" id="ReturnDate" required=""><img loading="lazy" src="images/Date.svg" alt="" class="field-icon"></div>
+                <div class="field-wrap"><input class="date-field w-input" autocomplete="off" maxlength="256" name="ReturnDate" data-name="ReturnDate" placeholder="Select Return Date" data-toggle="datepicker" type="date" id="ReturnDate" required=""><img loading="lazy" src="images/Date.svg" alt="" class="field-icon"></div>
               </div>
               <div class="input-field-wrap">
                 <div class="field-label-3">Departure City Airport Code</div>
@@ -77,12 +77,9 @@
           </div>
         </div>
       </div>
-      <!-- Add this new container for flight results -->
       <div id="flight-results" class="flight-results" style="display: none;">
-        <h2>Departure Flights</h2>
+        <h2>Available Flights</h2>
         <div id="departure-flights"></div>
-        <h2>Return Flights</h2>
-        <div id="return-flights"></div>
       </div>
       <div id="loading-screen" style="display: none;">
         <h2>Loading...</h2>
@@ -96,7 +93,7 @@
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-analytics.js";
     import { getDatabase, ref, onValue, get, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
     // Your web app's Firebase configuration
     const firebaseConfig = {
@@ -125,6 +122,12 @@
     window.firebaseOrderByChild = orderByChild;
     window.firebaseEqualTo = equalTo;
     window.firebaseAuth = auth;
+    window.firebaseFirestore = db;
+    window.firebaseCollection = collection;
+    window.firebaseOnSnapshot = onSnapshot;
+    window.firebaseDoc = doc;
+    window.firebaseGetDoc = getDoc;
+    window.firebaseSetDoc = setDoc;
 
     // Google Sign-In
     const provider = new GoogleAuthProvider();
@@ -189,17 +192,20 @@
     $(document).ready(function() {
       $('#flight-form').on('submit', function(e) {
         e.preventDefault();
+        console.log('Form submitted');
         
         const userUID = localStorage.getItem('userUID');
+        console.log('User UID:', userUID);
         if (userUID) {
           var formData = {
             uid: userUID,
-            departDate: $('#DepartDate').val(),
-            returnDate: $('#ReturnDate').val(),
+            departDate: formatDate($('#DepartDate').val()),
+            returnDate: formatDate($('#ReturnDate').val()),
             departureCode: $('#AirportCode').val(),
             destinationCode: $('#DestinationCode').val(),
             email: $('#email').val()
           };
+          console.log('Form data:', formData);
 
           // Show loading screen
           $('#loading-screen').show();
@@ -212,7 +218,7 @@
             contentType: 'application/json',
             data: JSON.stringify(formData),
             success: function(response) {
-              console.log('Data sent to Make.com');
+              console.log('Data sent to Make.com successfully');
               // Start listening for flights in Firebase
               listenForFlights();
             },
@@ -229,93 +235,129 @@
         }
       });
 
+      function formatDate(dateString) {
+        const parts = dateString.split('-');
+        if (parts.length === 3) {
+          // If it's already in YYYY-MM-DD format, return as is
+          return dateString;
+        }
+        // Assuming the current format is MM-DD-YYYY
+        const date = new Date(dateString);
+        return date.getFullYear() + '-' + 
+               String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+               String(date.getDate()).padStart(2, '0');
+      }
+
       function listenForFlights() {
+        console.log('Starting to listen for flights');
         const userUID = localStorage.getItem('userUID');
+        console.log('User UID in listenForFlights:', userUID);
         if (userUID) {
-          const flightsRef = db.collection('users').doc(userUID).collection('flights');
-          flightsRef.onSnapshot((snapshot) => {
-            const flights = [];
-            snapshot.forEach((doc) => {
-              flights.push(doc.data());
+          const flightsRef = firebaseCollection(firebaseFirestore, 'users', userUID, 'flights');
+          console.log('Listening to:', flightsRef.path);
+          firebaseOnSnapshot(flightsRef, (snapshot) => {
+            console.log('Snapshot received:', snapshot.size, 'documents');
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === "added") {
+                console.log("New flight document:", change.doc.data());
+                const flightData = change.doc.data();
+                if (flightData.flights) {
+                  try {
+                    const parsedFlights = JSON.parse(flightData.flights);
+                    console.log('Parsed flights:', parsedFlights);
+                    if (Array.isArray(parsedFlights)) {
+                      displayDepartureFlights(parsedFlights);
+                      $('#loading-screen').hide();
+                      $('#flight-results').show();
+                    } else {
+                      console.error('Parsed flights is not an array:', parsedFlights);
+                    }
+                  } catch (error) {
+                    console.error('Error parsing flights data:', error);
+                  }
+                } else {
+                  console.error('No flights data found in the document');
+                }
+              }
             });
-            if (flights.length > 0) {
-              displayDepartureFlights(flights);
-              $('#loading-screen').hide();
-              $('#flight-results').show();
-            }
+          }, (error) => {
+            console.error("Error listening for flights:", error);
+            $('#loading-screen').hide();
+            $('.w-form-fail').show().text('Error loading flight data. Please try again.');
           });
+        } else {
+          console.error('User not logged in');
+          $('#loading-screen').hide();
+          $('.w-form-fail').show().text('Please log in to view flight results.');
         }
       }
 
       function displayDepartureFlights(flights) {
+        console.log('Displaying departure flights:', flights);
         var flightsList = $('#departure-flights');
         flightsList.empty();
 
-        flights.forEach(function(flight) {
+        flights.forEach(function(flight, index) {
+          console.log('Processing flight:', flight);
           var flightItem = $('<div class="flight-item">')
-            .append($('<p>').text(`From: ${flight.from} To: ${flight.to}`))
-            .append($('<p>').text(`Departure: ${flight.departureTime}`))
-            .append($('<p>').text(`Price: ${flight.price}`))
-            .append($('<button class="select-flight">').text('Select').data('token', flight.departure_token));
+            .append($('<h3>').text(`Flight Option ${index + 1}`))
+            .append($('<p>').text(`Airline: ${flight['1_airline']}`))
+            .append($('<p>').text(`From: ${flight['1_departure_airport_name']} To: ${flight['1_arrival_airport_name']}`))
+            .append($('<p>').text(`Departure: ${flight['1_departure_time']}`))
+            .append($('<p>').text(`Arrival: ${flight['1_arrival_time']}`))
+            .append($('<p>').text(`Duration: ${flight['1_duration']} minutes`))
+            .append($('<p>').text(`Price: $${flight['lowest_price']}`))
+            .append($('<p>').text(`Legroom: ${flight['1_legroom']}`))
+            .append($('<p>').text(`Aircraft: ${flight['1_airplane']}`))
+            .append($('<img>').attr('src', flight['1_logo']).attr('alt', `${flight['1_airline']} logo`))
+            .append($('<button class="select-flight">').text('Select').data('flightIndex', index));
 
           flightsList.append(flightItem);
         });
+
+        console.log('Finished displaying flights');
 
         $('.select-flight').on('click', function() {
-          var departureToken = $(this).data('token');
-          getReturnFlights(departureToken);
-        });
-      }
-
-      function getReturnFlights(departureToken) {
-        const returnFlightsRef = window.firebaseRef(window.firebaseDatabase, 'returnFlights');
-        const returnFlightsQuery = window.firebaseQuery(returnFlightsRef, window.firebaseOrderByChild('departure_token'), window.firebaseEqualTo(departureToken));
-        
-        window.firebaseGet(returnFlightsQuery).then((snapshot) => {
-          const returnFlights = snapshot.val();
-          if (returnFlights) {
-            displayReturnFlights(Object.values(returnFlights));
-          }
-        }).catch((error) => {
-          console.error('Error fetching return flights:', error);
-        });
-      }
-
-      function displayReturnFlights(flights) {
-        var flightsList = $('#return-flights');
-        flightsList.empty();
-
-        flights.forEach(function(flight) {
-          var flightItem = $('<div class="flight-item">')
-            .append($('<p>').text(`From: ${flight.return_from} To: ${flight.return_to}`))
-            .append($('<p>').text(`Departure: ${flight.return_departureTime}`))
-            .append($('<p>').text(`Price: ${flight.return_price}`))
-            .append($('<button class="book-flight">').text('Book'));
-
-          flightsList.append(flightItem);
-        });
-
-        $('.book-flight').on('click', function() {
-          // Implement booking logic here
+          var flightIndex = $(this).data('flightIndex');
+          console.log('Selected flight:', flights[flightIndex]);
         });
       }
     });
   </script>
-  <script src="js/webflow.js" type="text/javascript"></script>
+  
   <script src="https://fengyuanchen.github.io/datepicker/js/datepicker.js"></script>
   <script>
     $(document).ready(function () {
         $('[data-toggle="datepicker"]').datepicker({
-            format: 'mm-dd-yyyy'
+            format: 'yyyy-mm-dd',
+            autoHide: true
         });
-        // Available date placeholders:
-        // Year: yyyy
-        // Month: mm
-        // Day: dd
-        if (window.innerWidth < 768) {
-            $('[data-toggle="datepicker"]').attr('readonly', 'readonly')
-        }
     });
 </script>
+<style>
+  .flight-item {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+  }
+  .flight-item img {
+    max-width: 100px;
+    margin-bottom: 10px;
+  }
+  .select-flight {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+</style>
 </body>
 </html>
